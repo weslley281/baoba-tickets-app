@@ -1,0 +1,21 @@
+{
+  "name": "baoba-tickets-app",
+  "version": "1.0.0",
+  "description": "Uma aplicação de fila de prioridade",
+  "main": "src/main.ts",
+  "author": "Weslley Henrique Vieira Ferraz",
+  "license": "MIT",
+  "scripts": {
+    "start": "ts-node src/main.ts",
+    "build": "tsc",
+    "dev": "ts-node src/main.ts"
+  },
+  "dependencies": {
+    "electron": "^36.3.1",
+    "ts-node": "^10.9.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "typescript": "^5.8.3"
+  }
+}
