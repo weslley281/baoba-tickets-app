@@ -23,7 +23,6 @@ function createWindow() {
   mainWindow.loadFile('index.html');
 }
 
-
 app.whenReady().then(() => {
   createWindow();
 
@@ -43,58 +42,77 @@ app.whenReady().then(() => {
 //     });
 // });
 
-
 // Geração do ticket
 ipcMain.handle('gerar-ticket', async (event, tipo) => {
-  const hoje = format(new Date(), 'yyyy-MM-dd');
+  const hoje = new Date().toISOString().split('T')[0]; // Ex: 2025-05-30
   const pasta = path.join(__dirname, 'filas do dia');
-  const arquivoDoDia = path.join(pasta, `${hoje}.json`);
+  const caminhoArquivo = path.join(pasta, `${hoje}.json`);
 
+  // Garante que a pasta existe
   if (!fs.existsSync(pasta)) fs.mkdirSync(pasta);
 
-  let dados = { comum: [], prioritario: [] };
+  let dados;
 
-  if (fs.existsSync(arquivoDoDia)) {
-    const conteudo = fs.readFileSync(arquivoDoDia);
-    dados = JSON.parse(conteudo);
+  // Se o arquivo não existir, cria com estrutura base
+  if (!fs.existsSync(caminhoArquivo)) {
+    dados = {
+      lastCommon: 0,
+      lastPriority: 0,
+      queueCommon: [],
+      queuePriority: [],
+      calledTickets: [],
+    };
+  } else {
+    dados = JSON.parse(fs.readFileSync(caminhoArquivo, 'utf8'));
   }
 
-  const numero = (dados[tipo].length + 1).toString().padStart(3, '0');
-  const codigo = (tipo === 'prioritario' ? 'P' : 'C') + numero;
+  let codigo;
 
-  dados[tipo].push({ codigo, data: new Date().toISOString() });
+  if (tipo === 'prioritario') {
+    dados.lastPriority++;
+    codigo = `P${dados.lastPriority.toString().padStart(3, '0')}`;
+    dados.queuePriority.push(codigo);
+  } else {
+    dados.lastCommon++;
+    codigo = `C${dados.lastCommon.toString().padStart(3, '0')}`;
+    dados.queueCommon.push(codigo);
+  }
 
-  fs.writeFileSync(arquivoDoDia, JSON.stringify(dados, null, 2));
+  // Salva o arquivo atualizado
+  fs.writeFileSync(caminhoArquivo, JSON.stringify(dados, null, 2));
 
-  // Geração e impressão do ticket
+  // Geração do cupom HTML
   const cupomHTML = `
-        <html>
-        <head>
-            <style>
-                body { font-family: Arial; text-align: center; }
-                h1 { font-size: 48px; margin: 20px 0; }
-                p { font-size: 20px; }
-            </style>
-        </head>
-        <body>
-            <h1>${codigo}</h1>
-            <p>Tipo: ${tipo}</p>
-            <p>Baobá Ervas e Cereais</p>
-        </body>
-        </html>
-    `;
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial; text-align: center; }
+            h1 { font-size: 48px; margin: 20px 0; }
+            p { font-size: 20px; }
+        </style>
+    </head>
+    <body>
+        <h1>${codigo}</h1>
+        <p>Tipo: ${tipo === 'prioritario' ? 'Prioritário' : 'Comum'}</p>
+        <p>Baobá Ervas e Cereais</p>
+    </body>
+    </html>
+  `;
 
+  // Cria janela invisível para impressão
   const printWindow = new BrowserWindow({ show: false });
+
   printWindow.loadURL(
     'data:text/html;charset=utf-8,' + encodeURIComponent(cupomHTML)
   );
 
+  // Quando carregar o conteúdo, imprime direto
   printWindow.webContents.on('did-finish-load', () => {
     printWindow.webContents.print(
       {
         silent: true,
         printBackground: true,
-        deviceName: 'Brother HL-1200 series', // Substitua pelo nome da sua impressora
+        deviceName: 'Brother HL-1200 series', // Substitua pelo nome exato da sua impressora
       },
       () => {
         printWindow.close();
@@ -103,4 +121,52 @@ ipcMain.handle('gerar-ticket', async (event, tipo) => {
   });
 
   return { codigo };
+});
+
+// Manipulador para chamar ticket
+ipcMain.handle('chamar-proximo', async (event, { atendente, tipo }) => {
+  const hoje = new Date().toISOString().split('T')[0];
+  const pasta = path.join(__dirname, 'filas do dia');
+  const caminhoArquivo = path.join(pasta, `${hoje}.json`);
+
+  if (!fs.existsSync(caminhoArquivo)) {
+    return { ticket: null };
+  }
+
+  const dados = JSON.parse(fs.readFileSync(caminhoArquivo, 'utf8'));
+
+  const fila = dados[tipo];
+  if (fila.length === 0) {
+    return { ticket: null };
+  }
+
+  const proximo = fila.shift(); // Remove o primeiro da fila
+  dados.calledTickets.push({
+    ...proximo,
+    atendente,
+    horaChamada: new Date().toISOString(),
+  });
+
+  fs.writeFileSync(caminhoArquivo, JSON.stringify(dados, null, 2));
+
+  return { ticket: proximo.codigo, atendente };
+});
+
+// Manipulador para chamar ticket
+ipcMain.handle('listar-chamados', async () => {
+  const hoje = new Date().toISOString().split('T')[0];
+  const caminho = path.join(__dirname, 'filas do dia', `${hoje}.json`);
+
+  if (!fs.existsSync(caminho)) return [];
+
+  const dados = JSON.parse(fs.readFileSync(caminho, 'utf-8'));
+  const ultimosChamados = dados.calledTickets.slice(-10).reverse(); // últimos 10, mais recentes primeiro
+
+  return ultimosChamados.map((ticket) => ({
+    codigo: ticket.codigo,
+    tipo: ticket.tipo,
+    atendente: ticket.atendente || 'Desconhecido',
+    hora: ticket.hora || new Date().toLocaleTimeString('pt-BR'),
+    data: hoje.split('-').reverse().join('/'),
+  }));
 });
