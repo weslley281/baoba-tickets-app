@@ -1,35 +1,25 @@
 {
   "name": "baoba-tickets-app",
   "version": "1.0.0",
-  "description": "Uma aplicação de fila de prioridade",
-  "main": "src/main.ts",
-  "author": "Weslley Henrique Vieira Ferraz",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/weslley281/baoba-tickets-app"
-  },
-  "keywords": [
-    "electron",
-    "typescript",
-    "queue",
-    "priority"
-  ],
+  "main": "main.js",
   "scripts": {
-    "start": "npm run build && electron ./dist/main.js && cp src/index.html dist/",
-    "prestart": "npm run build",
-    "postinstall": "electron-builder install-app-deps",
-    "build": "tsc && cp src/index.html dist/",
-    "dev": "npm run build && electron ./dist/main.js && cp src/index.html dist/"
+    "start": "electron .",
+    "build": "electron-packager . baoba-tickets-app --platform=win32 --arch=x64 --out=dist --overwrite",
+    "build-mac": "electron-packager . baoba-tickets-app --platform=darwin --arch=x64 --out=dist --overwrite",
+    "build-linux": "electron-packager . baoba-tickets-app --platform=linux --arch=x64 --out=dist --overwrite",
+    "package": "electron-packager . baoba-tickets-app --platform=all --arch=x64 --out=dist --overwrite",
+    "postinstall": "electron-rebuild",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "electron": "^36.3.2",
+    "electron-reload": "^2.0.0-alpha.1"
   },
   "dependencies": {
-    "electron": "^36.3.1"
-  },
-  "devDependencies": {
-    "@types/node": "^22.15.21",
-    "concurrently": "^9.1.2",
-    "electron-reload": "^2.0.0-alpha.1",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "date-fns": "^4.1.0"
   }
 }
