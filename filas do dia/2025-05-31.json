@@ -1,0 +1,29 @@
+{
+  "lastCommon": 2,
+  "lastPriority": 1,
+  "queueCommon": [
+    {
+      "codigo": "C002",
+      "tipo": "comum",
+      "criadoEm": "2025-05-31T14:31:09.566Z"
+    }
+  ],
+  "queuePriority": [],
+  "calledTickets": [
+    {
+      "0": "P",
+      "1": "0",
+      "2": "0",
+      "3": "1",
+      "atendente": "1",
+      "horaChamada": "2025-05-31T14:28:08.281Z"
+    },
+    {
+      "codigo": "C001",
+      "tipo": "comum",
+      "criadoEm": "2025-05-31T14:25:56.207Z",
+      "atendente": "1",
+      "horaChamada": "2025-05-31T14:31:25.451Z"
+    }
+  ]
+}

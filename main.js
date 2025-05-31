@@ -71,11 +71,23 @@ ipcMain.handle('gerar-ticket', async (event, tipo) => {
   if (tipo === 'prioritario') {
     dados.lastPriority++;
     codigo = `P${dados.lastPriority.toString().padStart(3, '0')}`;
-    dados.queuePriority.push(codigo);
+
+    //dados.queuePriority.push(codigo);
+    dados.queuePriority.push({
+      codigo,
+      tipo: 'prioritario',
+      criadoEm: new Date().toISOString(),
+    });
   } else {
     dados.lastCommon++;
     codigo = `C${dados.lastCommon.toString().padStart(3, '0')}`;
-    dados.queueCommon.push(codigo);
+
+    //dados.queueCommon.push(codigo);
+    dados.queueCommon.push({
+      codigo,
+      tipo: 'comum',
+      criadoEm: new Date().toISOString(),
+    });
   }
 
   // Salva o arquivo atualizado
